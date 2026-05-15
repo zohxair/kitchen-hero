@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>KitchenHero — Slay Food Waste</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg:        #0a0e27;
+    --bg2:       #0d1233;
+    --glass:     rgba(255,255,255,0.04);
+    --glass-b:   rgba(255,255,255,0.09);
+    --neon-lime: #c6f135;
+    --neon-cyan: #00ffe7;
+    --neon-red:  #ff2d55;
+    --text:      #d8e0ff;
+    --text-dim:  #6b75a8;
+    --card-r:    18px;
+    --glow-lime: 0 0 18px #c6f13588, 0 0 40px #c6f13533;
+    --glow-red:  0 0 18px #ff2d5588, 0 0 40px #ff2d5533;
+    --glow-cyan: 0 0 18px #00ffe788, 0 0 40px #00ffe733;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── BACKGROUND GRID ─── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(198,241,53,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(198,241,53,.04) 1px, transparent 1px);
+    background-size: 44px 44px;
+    pointer-events: none;
+  }
+  body::after {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background: radial-gradient(ellipse 70% 50% at 50% 0%, #1a2a6c55 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  #app { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 32px 20px 60px; }
+
+  /* ─── HEADER ─── */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 36px; flex-wrap: wrap; gap: 16px;
+  }
+  .logo {
+    font-family: 'Orbitron', monospace; font-weight: 900; font-size: 2rem;
+    letter-spacing: 2px;
+    background: linear-gradient(90deg, var(--neon-lime), var(--neon-cyan));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    text-shadow: none; filter: drop-shadow(0 0 12px #c6f13566);
+  }
+  .logo span { color: var(--neon-red); -webkit-text-fill-color: var(--neon-red); filter: drop-shadow(0 0 10px #ff2d55aa); }
+  .tagline { font-size: .85rem; color: var(--text-dim); letter-spacing: 3px; text-transform: uppercase; margin-top: 2px; }
+
+  /* ─── TABS ─── */
+  .tabs { display: flex; gap: 6px; }
+  .tab-btn {
+    background: var(--glass); border: 1px solid var(--glass-b);
+    color: var(--text-dim); padding: 9px 20px; border-radius: 40px;
+    cursor: pointer; font-family: 'Orbitron', monospace; font-size: .7rem;
+    letter-spacing: 1px; transition: all .25s; text-transform: uppercase;
+  }
+  .tab-btn:hover { color: var(--text); border-color: var(--neon-lime); }
+  .tab-btn.active {
+    background: linear-gradient(135deg, #c6f13522, #00ffe711);
+    border-color: var(--neon-lime); color: var(--neon-lime);
+    box-shadow: var(--glow-lime);
+  }
+
+  /* ─── PANELS ─── */
+  .panel { display: none; animation: fadeUp .35s ease; }
+  .panel.active { display: block; }
+  @keyframes fadeUp { from { opacity:0; transform: translateY(14px); } to { opacity:1; transform: translateY(0); } }
+
+  /* ─── GLASS CARD ─── */
+  .card {
+    background: var(--glass);
+    backdrop-filter: blur(18px);
+    border: 1px solid var(--glass-b);
+    border-radius: var(--card-r);
+    padding: 28px;
+    margin-bottom: 24px;
+    position: relative; overflow: hidden;
+  }
+  .card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--neon-lime), transparent);
+    opacity: .4;
+  }
+  .card-title {
+    font-family: 'Orbitron', monospace; font-size: .8rem; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--neon-lime); margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .card-title i { font-size: .9rem; }
+
+  /* ─── FORM ROW ─── */
+  .form-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+  .field { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 140px; }
+  .field label { font-size: .75rem; letter-spacing: 1px; color: var(--text-dim); text-transform: uppercase; }
+  .field input, .field select {
+    background: rgba(255,255,255,.05);
+    border: 1px solid var(--glass-b);
+    border-radius: 10px;
+    color: var(--text);
+    padding: 10px 14px;
+    font-family: 'Rajdhani', sans-serif; font-size: 1rem;
+    outline: none; transition: border-color .2s, box-shadow .2s;
+    width: 100%;
+  }
+  .field input:focus, .field select:focus {
+    border-color: var(--neon-lime);
+    box-shadow: 0 0 0 2px #c6f13522;
+  }
+  .field input::placeholder { color: var(--text-dim); }
+
+  /* ─── BUTTONS ─── */
+  .btn {
+    padding: 11px 24px; border-radius: 10px; border: none; cursor: pointer;
+    font-family: 'Orbitron', monospace; font-size: .72rem; letter-spacing: 1px;
+    text-transform: uppercase; transition: all .22s; white-space: nowrap;
+  }
+  .btn-lime {
+    background: linear-gradient(135deg, #c6f135, #a8d41e);
+    color: #0a0e27;
+    box-shadow: var(--glow-lime);
+  }
+  .btn-lime:hover { filter: brightness(1.15); transform: translateY(-2px); }
+  .btn-red {
+    background: linear-gradient(135deg, #ff2d55, #cc1f3e);
+    color: #fff;
+    box-shadow: var(--glow-red);
+  }
+  .btn-red:hover { filter: brightness(1.15); transform: translateY(-2px); }
+  .btn-cyan {
+    background: linear-gradient(135deg, #00ffe7, #00c9b8);
+    color: #0a0e27;
+    box-shadow: var(--glow-cyan);
+  }
+  .btn-cyan:hover { filter: brightness(1.15); transform: translateY(-2px); }
+  .btn-ghost {
+    background: transparent; border: 1px solid var(--glass-b); color: var(--text-dim);
+  }
+  .btn-ghost:hover { border-color: var(--neon-lime); color: var(--neon-lime); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; transform: none !important; }
+
+  /* ─── INVENTORY LIST ─── */
+  #inventory-list { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+
+  .inv-item {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--glass-b);
+    border-radius: 12px; padding: 12px 16px;
+    transition: border-color .2s;
+  }
+  .inv-item:hover { border-color: rgba(198,241,53,.3); }
+  .inv-item.urgent {
+    border-color: var(--neon-red);
+    background: rgba(255,45,85,.07);
+    animation: pulse-red 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse-red {
+    0%, 100% { box-shadow: 0 0 0 0 #ff2d5500; }
+    50%       { box-shadow: 0 0 14px 4px #ff2d5544; }
+  }
+  .inv-item .item-name {
+    font-family: 'Orbitron', monospace; font-size: .8rem; color: var(--text); flex: 1;
+  }
+  .inv-item.urgent .item-name { color: var(--neon-red); }
+  .inv-item .item-meta { font-size: .8rem; color: var(--text-dim); display: flex; gap: 14px; align-items: center; }
+  .item-meta .expiry-badge {
+    padding: 3px 10px; border-radius: 20px; font-size: .72rem; font-weight: 600;
+    letter-spacing: .5px;
+  }
+  .expiry-safe { background: #c6f13522; color: var(--neon-lime); border: 1px solid #c6f13555; }
+  .expiry-soon { background: #ff2d5522; color: var(--neon-red); border: 1px solid #ff2d5555; }
+  .btn-remove {
+    background: none; border: 1px solid #ff2d5544; color: var(--neon-red);
+    width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: .8rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s; flex-shrink: 0;
+  }
+  .btn-remove:hover { background: #ff2d5522; box-shadow: var(--glow-red); }
+
+  /* ─── RADAR HEADER ─── */
+  .radar-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+  .urgency-count {
+    font-family: 'Orbitron', monospace; font-size: 2.4rem; font-weight: 900;
+    color: var(--neon-red); text-shadow: var(--glow-red);
+    line-height: 1;
+  }
+  .urgency-label { font-size: .75rem; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; }
+  .ai-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* ─── OUTPUT SECTION ─── */
+  #output-area { margin-top: 20px; display: none; }
+  .output-card {
+    background: rgba(0,255,231,.04); border: 1px solid rgba(0,255,231,.15);
+    border-radius: 14px; padding: 22px;
+  }
+  .output-card h4 { font-family: 'Orbitron', monospace; font-size: .75rem; letter-spacing: 2px; color: var(--neon-cyan); margin-bottom: 14px; }
+  #recipe-text { line-height: 1.75; color: var(--text); white-space: pre-wrap; font-size: .95rem; }
+  #generated-image { max-width: 100%; border-radius: 12px; margin-top: 16px; border: 1px solid var(--glass-b); display: none; }
+
+  /* ─── MODAL ─── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1000;
+    background: rgba(10,14,39,.85); backdrop-filter: blur(10px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.open { display: flex; animation: fadeIn .2s ease; }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  .modal {
+    background: #0d1233; border: 1px solid var(--glass-b); border-radius: 20px;
+    max-width: 720px; width: 100%; max-height: 90vh; overflow-y: auto;
+    padding: 32px; position: relative;
+    box-shadow: 0 30px 80px #000a;
+  }
+  .modal::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--neon-lime), var(--neon-cyan), var(--neon-red));
+  }
+  .modal-title { font-family: 'Orbitron', monospace; font-size: 1rem; letter-spacing: 2px; color: var(--neon-lime); margin-bottom: 20px; }
+  .modal-close {
+    position: absolute; top: 20px; right: 20px;
+    background: none; border: 1px solid var(--glass-b); color: var(--text-dim);
+    width: 36px; height: 36px; border-radius: 8px; cursor: pointer; font-size: 1rem;
+    display: flex; align-items: center; justify-content: center; transition: all .2s;
+  }
+  .modal-close:hover { border-color: var(--neon-red); color: var(--neon-red); }
+
+  /* ─── LOADER ─── */
+  .loader { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 30px; }
+  .spinner {
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 3px solid var(--glass-b); border-top-color: var(--neon-lime);
+    animation: spin .75s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loader p { color: var(--text-dim); font-size: .85rem; letter-spacing: 1px; text-transform: uppercase; }
+
+  /* ─── SETTINGS ─── */
+  .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width:600px) { .settings-grid { grid-template-columns: 1fr; } }
+  .mode-card {
+    border: 2px solid var(--glass-b); border-radius: 14px; padding: 22px;
+    cursor: pointer; transition: all .25s; position: relative;
+  }
+  .mode-card.selected { border-color: var(--neon-lime); background: rgba(198,241,53,.06); }
+  .mode-card .mode-icon { font-size: 2rem; margin-bottom: 12px; }
+  .mode-card h3 { font-family: 'Orbitron', monospace; font-size: .85rem; letter-spacing: 1px; margin-bottom: 8px; }
+  .mode-card p { font-size: .85rem; color: var(--text-dim); line-height: 1.6; }
+  .mode-check {
+    position: absolute; top: 14px; right: 14px; width: 22px; height: 22px;
+    border-radius: 50%; border: 2px solid var(--glass-b);
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+  }
+  .mode-card.selected .mode-check { border-color: var(--neon-lime); background: var(--neon-lime); color: #0a0e27; }
+
+  .api-key-wrap { margin-top: 20px; }
+  .api-key-wrap label { font-size: .75rem; letter-spacing: 1px; color: var(--text-dim); text-transform: uppercase; display: block; margin-bottom: 8px; }
+  .api-key-row { display: flex; gap: 10px; }
+  .api-key-row input {
+    flex: 1; background: rgba(255,255,255,.05); border: 1px solid var(--glass-b);
+    border-radius: 10px; color: var(--text); padding: 10px 14px;
+    font-family: 'Rajdhani', sans-serif; font-size: 1rem; outline: none;
+  }
+  .api-key-row input:focus { border-color: var(--neon-lime); }
+
+  .info-box {
+    background: rgba(198,241,53,.05); border: 1px solid rgba(198,241,53,.2);
+    border-radius: 10px; padding: 14px 18px; margin-top: 16px;
+    font-size: .85rem; color: var(--text-dim); line-height: 1.6;
+  }
+  .info-box i { color: var(--neon-lime); margin-right: 6px; }
+
+  /* ─── EMPTY STATE ─── */
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-dim); }
+  .empty-state i { font-size: 2.5rem; margin-bottom: 12px; display: block; opacity: .4; }
+  .empty-state p { font-size: .9rem; }
+
+  /* ─── STATS ROW ─── */
+  .stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 24px; }
+  @media (max-width:600px) { .stats-row { grid-template-columns: 1fr 1fr; } }
+  .stat-card {
+    background: var(--glass); border: 1px solid var(--glass-b);
+    border-radius: 14px; padding: 18px; text-align: center;
+  }
+  .stat-card .stat-n { font-family: 'Orbitron', monospace; font-size: 1.8rem; font-weight: 700; }
+  .stat-card .stat-l { font-size: .72rem; letter-spacing: 1px; color: var(--text-dim); text-transform: uppercase; margin-top: 4px; }
+  .stat-lime .stat-n { color: var(--neon-lime); text-shadow: var(--glow-lime); }
+  .stat-red  .stat-n { color: var(--neon-red);  text-shadow: var(--glow-red);  }
+  .stat-cyan .stat-n { color: var(--neon-cyan); text-shadow: var(--glow-cyan); }
+
+  /* ─── QUANTITY BADGE ─── */
+  .qty-badge {
+    background: rgba(198,241,53,.12); color: var(--neon-lime);
+    border: 1px solid rgba(198,241,53,.3); border-radius: 6px;
+    padding: 2px 9px; font-size: .76rem; font-weight: 600;
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #2a3060; border-radius: 10px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ─── HEADER ─── -->
+  <header>
+    <div>
+      <div class="logo">Kitchen<span>Hero</span></div>
+      <div class="tagline">AI-Powered Food Waste Eliminator</div>
+    </div>
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="inventory"><i class="fa fa-boxes-stacked"></i> Inventory</button>
+      <button class="tab-btn" data-tab="radar"><i class="fa fa-satellite-dish"></i> Radar</button>
+      <button class="tab-btn" data-tab="settings"><i class="fa fa-sliders"></i> Settings</button>
+    </nav>
+  </header>
+
+  <!-- ════════════════ INVENTORY TAB ════════════════ -->
+  <div class="panel active" id="tab-inventory">
+
+    <div class="stats-row">
+      <div class="stat-card stat-lime"><div class="stat-n" id="stat-total">0</div><div class="stat-l">Total Items</div></div>
+      <div class="stat-card stat-red"><div class="stat-n" id="stat-urgent">0</div><div class="stat-l">Expiring Soon</div></div>
+      <div class="stat-card stat-cyan"><div class="stat-n" id="stat-safe">0</div><div class="stat-l">Still Fresh</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="fa fa-plus-circle"></i> Add Ingredient</div>
+      <div class="form-row">
+        <div class="field">
+          <label>Ingredient Name</label>
+          <input type="text" id="item-name" placeholder="e.g. Spinach" />
+        </div>
+        <div class="field" style="max-width:120px;">
+          <label>Qty</label>
+          <input type="number" id="item-qty" value="1" min="1" />
+        </div>
+        <div class="field">
+          <label>Unit</label>
+          <select id="item-unit">
+            <option>pcs</option><option>g</option><option>kg</option>
+            <option>ml</option><option>L</option><option>cups</option><option>bunch</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Expiry Date</label>
+          <input type="date" id="item-expiry" />
+        </div>
+        <button class="btn btn-lime" onclick="addItem()"><i class="fa fa-plus"></i> Add</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="fa fa-list-ul"></i> My Pantry</div>
+      <div id="inventory-list"></div>
+    </div>
+  </div>
+
+  <!-- ════════════════ RADAR TAB ════════════════ -->
+  <div class="panel" id="tab-radar">
+    <div class="card">
+      <div class="radar-top">
+        <div>
+          <div class="urgency-count" id="radar-count">0</div>
+          <div class="urgency-label">Items Expiring in 48h</div>
+        </div>
+        <div class="ai-actions">
+          <button class="btn btn-red" id="btn-recipe" onclick="getRecipe()">
+            <i class="fa fa-robot"></i> AI Recipe
+          </button>
+          <button class="btn btn-cyan" id="btn-image" onclick="getImage()" disabled>
+            <i class="fa fa-image"></i> AI Image
+          </button>
+        </div>
+      </div>
+      <div id="urgent-list"></div>
+    </div>
+
+    <!-- Output -->
+    <div id="output-area">
+      <div class="output-card">
+        <h4><i class="fa fa-wand-magic-sparkles"></i> AI Generated Output</h4>
+        <div id="recipe-text"></div>
+        <img id="generated-image" alt="AI Generated Dish" />
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ SETTINGS TAB ════════════════ -->
+  <div class="panel" id="tab-settings">
+    <div class="card">
+      <div class="card-title"><i class="fa fa-sliders"></i> AI Mode</div>
+      <div class="settings-grid">
+        <div class="mode-card selected" id="mode-cloud" onclick="setMode('cloud')">
+          <div class="mode-check"><i class="fa fa-check" style="font-size:.65rem;"></i></div>
+          <div class="mode-icon">☁️</div>
+          <h3>Cloud Mode</h3>
+          <p>Uses HuggingFace Inference API for recipe generation. Requires an API key. No local GPU needed.</p>
+        </div>
+        <div class="mode-card" id="mode-local" onclick="setMode('local')">
+          <div class="mode-check"><i class="fa fa-check" style="font-size:.65rem;"></i></div>
+          <div class="mode-icon">🖥️</div>
+          <h3>Local Mode</h3>
+          <p>Runs SenseNova-U1-8B on your machine via the Python backend at localhost:5000. GPU recommended.</p>
+        </div>
+      </div>
+
+      <div class="api-key-wrap" id="hf-key-wrap">
+        <label><i class="fa fa-key"></i> HuggingFace API Key (Cloud Mode)</label>
+        <div class="api-key-row">
+          <input type="password" id="hf-api-key" placeholder="hf_••••••••••••••••••••" />
+          <button class="btn btn-lime" onclick="saveApiKey()"><i class="fa fa-save"></i> Save</button>
+        </div>
+      </div>
+
+      <div class="info-box" id="mode-info">
+        <i class="fa fa-circle-info"></i>
+        <strong>Cloud Mode active.</strong> Your HuggingFace API key is stored in localStorage and sent directly from your browser to the HuggingFace API. Recipe generation uses <code>google/gemma-2-9b-it</code>. Image generation always routes through the local Python backend.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="fa fa-terminal"></i> Backend Config</div>
+      <div class="form-row">
+        <div class="field">
+          <label>Backend URL</label>
+          <input type="text" id="backend-url" value="http://localhost:5000" />
+        </div>
+        <button class="btn btn-ghost" onclick="saveBackend()"><i class="fa fa-save"></i> Save</button>
+        <button class="btn btn-ghost" onclick="pingBackend()"><i class="fa fa-plug"></i> Ping</button>
+      </div>
+      <div id="ping-result" style="margin-top:10px;font-size:.85rem;color:var(--text-dim);"></div>
+    </div>
+  </div>
+
+</div><!-- /#app -->
+
+<!-- ─── MODAL ─── -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOnBg(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()"><i class="fa fa-xmark"></i></button>
+    <div class="modal-title" id="modal-title">AI Result</div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════ */
+let inventory = JSON.parse(localStorage.getItem('kh-inventory') || '[]');
+let currentMode = localStorage.getItem('kh-mode') || 'cloud';
+let backendUrl  = localStorage.getItem('kh-backend') || 'http://localhost:5000';
+let lastRecipeName = '';
+
+/* ═══════════════════════════════════════════════
+   TABS
+═══════════════════════════════════════════════ */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'radar') renderRadar();
+  });
+});
+
+/* ═══════════════════════════════════════════════
+   INVENTORY
+═══════════════════════════════════════════════ */
+function saveInventory() {
+  localStorage.setItem('kh-inventory', JSON.stringify(inventory));
+}
+
+function isUrgent(expiry) {
+  const now  = new Date();
+  const exp  = new Date(expiry);
+  const diff = (exp - now) / 36e5; // hours
+  return diff <= 48 && diff >= 0;
+}
+
+function isExpired(expiry) {
+  return new Date(expiry) < new Date();
+}
+
+function daysLabel(expiry) {
+  const now  = new Date();
+  const exp  = new Date(expiry + 'T23:59:59');
+  const diff = Math.ceil((exp - now) / 864e5);
+  if (diff < 0) return 'Expired';
+  if (diff === 0) return 'Today!';
+  if (diff === 1) return '1 day left';
+  return `${diff} days`;
+}
+
+function addItem() {
+  const name   = document.getElementById('item-name').value.trim();
+  const qty    = document.getElementById('item-qty').value;
+  const unit   = document.getElementById('item-unit').value;
+  const expiry = document.getElementById('item-expiry').value;
+  if (!name || !expiry) { alert('Name and expiry date are required.'); return; }
+  inventory.push({ id: Date.now(), name, qty, unit, expiry });
+  saveInventory();
+  document.getElementById('item-name').value = '';
+  renderInventory();
+}
+
+function removeItem(id) {
+  inventory = inventory.filter(i => i.id !== id);
+  saveInventory();
+  renderInventory();
+  renderRadar();
+}
+
+function renderInventory() {
+  const list    = document.getElementById('inventory-list');
+  const urgent  = inventory.filter(i => isUrgent(i.expiry) && !isExpired(i.expiry));
+  const total   = inventory.length;
+  const safe    = inventory.filter(i => !isUrgent(i.expiry) && !isExpired(i.expiry)).length;
+
+  document.getElementById('stat-total').textContent  = total;
+  document.getElementById('stat-urgent').textContent = urgent.length;
+  document.getElementById('stat-safe').textContent   = safe;
+
+  if (!total) {
+    list.innerHTML = `<div class="empty-state"><i class="fa fa-box-open"></i><p>No items yet. Add your first ingredient above!</p></div>`;
+    return;
+  }
+
+  const sorted = [...inventory].sort((a,b) => new Date(a.expiry) - new Date(b.expiry));
+  list.innerHTML = sorted.map(item => {
+    const urg = isUrgent(item.expiry) && !isExpired(item.expiry);
+    const exp = isExpired(item.expiry);
+    const label = daysLabel(item.expiry);
+    const badgeCls = (urg || exp) ? 'expiry-soon' : 'expiry-safe';
+    return `
+      <div class="inv-item ${urg ? 'urgent' : ''}">
+        <span class="item-name">${urg ? '<i class="fa fa-triangle-exclamation"></i> ' : ''}${item.name}</span>
+        <div class="item-meta">
+          <span class="qty-badge">${item.qty} ${item.unit}</span>
+          <span class="expiry-badge ${badgeCls}">${label}</span>
+          <span style="color:var(--text-dim);font-size:.78rem;">${item.expiry}</span>
+          <button class="btn-remove" onclick="removeItem(${item.id})" title="Remove"><i class="fa fa-trash"></i></button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════
+   RADAR
+═══════════════════════════════════════════════ */
+function renderRadar() {
+  const urgent = inventory.filter(i => isUrgent(i.expiry) && !isExpired(i.expiry));
+  document.getElementById('radar-count').textContent = urgent.length;
+  document.getElementById('btn-image').disabled = true;
+
+  const ul = document.getElementById('urgent-list');
+  if (!urgent.length) {
+    ul.innerHTML = `<div class="empty-state"><i class="fa fa-shield-halved" style="color:var(--neon-lime);opacity:.5;"></i><p>No items expiring soon. You're good to go! 🎉</p></div>`;
+    return;
+  }
+  ul.innerHTML = urgent.map(item => `
+    <div class="inv-item urgent">
+      <span class="item-name"><i class="fa fa-triangle-exclamation"></i> ${item.name}</span>
+      <div class="item-meta">
+        <span class="qty-badge">${item.qty} ${item.unit}</span>
+        <span class="expiry-badge expiry-soon">${daysLabel(item.expiry)}</span>
+      </div>
+    </div>`).join('');
+}
+
+/* ═══════════════════════════════════════════════
+   AI – RECIPE
+═══════════════════════════════════════════════ */
+async function getRecipe() {
+  const urgent = inventory.filter(i => isUrgent(i.expiry) && !isExpired(i.expiry));
+  if (!urgent.length) { alert('No urgent items to use!'); return; }
+
+  const ingredientList = urgent.map(i => `${i.qty} ${i.unit} of ${i.name}`).join(', ');
+  const prompt = `You are a creative chef. Using ONLY these ingredients (which are expiring soon): ${ingredientList} — suggest ONE delicious recipe. 
+Give it a creative name, list the ingredients used, and provide brief cooking steps (under 200 words). Be enthusiastic!`;
+
+  openModal('🤖 Generating Recipe...', '<div class="loader"><div class="spinner"></div><p>AI is cooking up ideas...</p></div>');
+
+  try {
+    let recipeText = '';
+    if (currentMode === 'cloud') {
+      recipeText = await callHuggingFace(prompt);
+    } else {
+      recipeText = await callBackend('/recipe', { ingredients: urgent.map(i => i.name) });
+    }
+
+    // Extract recipe name (first line or after "Recipe:")
+    const lines = recipeText.split('\n').map(l => l.trim()).filter(Boolean);
+    lastRecipeName = lines[0].replace(/^[\*#]+\s*/, '') || 'Gourmet Surprise';
+    document.getElementById('btn-image').disabled = false;
+
+    document.getElementById('modal-title').textContent = '🍽️ AI Recipe';
+    document.getElementById('modal-body').innerHTML = `
+      <div style="white-space:pre-wrap;line-height:1.8;color:var(--text);">${recipeText}</div>
+      <div style="margin-top:20px;display:flex;gap:10px;">
+        <button class="btn btn-cyan" onclick="closeModal();getImage()"><i class="fa fa-image"></i> Generate Image</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+      </div>`;
+  } catch(e) {
+    document.getElementById('modal-body').innerHTML = `<p style="color:var(--neon-red);">Error: ${e.message}</p><button class="btn btn-ghost" onclick="closeModal()">Close</button>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   AI – IMAGE
+═══════════════════════════════════════════════ */
+async function getImage() {
+  if (!lastRecipeName) { alert('Generate a recipe first!'); return; }
+  const imagePrompt = `A beautiful, appetizing, professional food photography shot of ${lastRecipeName}, studio lighting, cinematic, 8K`;
+
+  openModal('🎨 Generating Image...', '<div class="loader"><div class="spinner"></div><p>Painting your dish with AI...</p></div>');
+
+  try {
+    const result = await callBackend('/generate-image', { prompt: imagePrompt });
+    // result is { image_path, base64 } or { image_url }
+    let imgSrc = '';
+    if (result.base64) {
+      imgSrc = `data:image/png;base64,${result.base64}`;
+    } else if (result.image_path) {
+      imgSrc = `${backendUrl}/output-image`;
+    } else if (result.image_url) {
+      imgSrc = result.image_url;
+    }
+
+    document.getElementById('modal-title').textContent = '🖼️ Your Dish';
+    document.getElementById('modal-body').innerHTML = `
+      <p style="color:var(--text-dim);margin-bottom:14px;">${lastRecipeName}</p>
+      <img src="${imgSrc}" alt="AI generated dish" style="width:100%;border-radius:12px;border:1px solid var(--glass-b);" />
+      <button class="btn btn-ghost" style="margin-top:16px;" onclick="closeModal()">Close</button>`;
+  } catch(e) {
+    document.getElementById('modal-body').innerHTML = `<p style="color:var(--neon-red);">Error: ${e.message}</p>
+    <p style="color:var(--text-dim);font-size:.85rem;margin-top:8px;">Make sure the Python backend is running at ${backendUrl}.</p>
+    <button class="btn btn-ghost" style="margin-top:14px;" onclick="closeModal()">Close</button>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   API HELPERS
+═══════════════════════════════════════════════ */
+async function callHuggingFace(prompt) {
+  const apiKey = localStorage.getItem('kh-hf-key') || '';
+  if (!apiKey) throw new Error('No HuggingFace API key set. Go to Settings → Cloud Mode and add your key.');
+
+  const res = await fetch('https://api-inference.huggingface.co/models/google/gemma-2-9b-it/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: 'google/gemma-2-9b-it',
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 512,
+      temperature: 0.8
+    })
+  });
+  if (!res.ok) throw new Error(`HuggingFace API error: ${res.status} ${res.statusText}`);
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || 'No response received.';
+}
+
+async function callBackend(endpoint, body) {
+  const res = await fetch(backendUrl + endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Backend error ${res.status}: ${errText}`);
+  }
+  return res.json();
+}
+
+/* ═══════════════════════════════════════════════
+   MODAL
+═══════════════════════════════════════════════ */
+function openModal(title, bodyHtml) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = bodyHtml;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function closeModalOnBg(e) { if (e.target === document.getElementById('modal-overlay')) closeModal(); }
+
+/* ═══════════════════════════════════════════════
+   SETTINGS
+═══════════════════════════════════════════════ */
+function setMode(mode) {
+  currentMode = mode;
+  localStorage.setItem('kh-mode', mode);
+  document.getElementById('mode-cloud').classList.toggle('selected', mode === 'cloud');
+  document.getElementById('mode-local').classList.toggle('selected', mode === 'local');
+  document.getElementById('hf-key-wrap').style.display = mode === 'cloud' ? 'block' : 'none';
+  document.getElementById('mode-info').innerHTML = mode === 'cloud'
+    ? '<i class="fa fa-circle-info"></i> <strong>Cloud Mode active.</strong> Uses HuggingFace Inference API (<code>google/gemma-2-9b-it</code>). Your API key is stored in localStorage. Image generation routes through the Python backend.'
+    : '<i class="fa fa-circle-info"></i> <strong>Local Mode active.</strong> All AI inference routes through the Python backend at <code>localhost:5000</code>. SenseNova-U1-8B is used for both text and image generation. A GPU is strongly recommended.';
+}
+
+function saveApiKey() {
+  const key = document.getElementById('hf-api-key').value.trim();
+  if (!key) { alert('Enter a valid API key.'); return; }
+  localStorage.setItem('kh-hf-key', key);
+  alert('✅ API key saved!');
+}
+
+function saveBackend() {
+  backendUrl = document.getElementById('backend-url').value.trim().replace(/\/$/, '');
+  localStorage.setItem('kh-backend', backendUrl);
+  alert('✅ Backend URL saved!');
+}
+
+async function pingBackend() {
+  const el = document.getElementById('ping-result');
+  el.innerHTML = '⏳ Pinging...';
+  try {
+    const res = await fetch(backendUrl + '/health', { signal: AbortSignal.timeout(4000) });
+    const data = await res.json();
+    el.innerHTML = `<span style="color:var(--neon-lime);">✅ Backend online — ${data.message || 'OK'}</span>`;
+  } catch(e) {
+    el.innerHTML = `<span style="color:var(--neon-red);">❌ Cannot reach backend at ${backendUrl}. Is app.py running?</span>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════ */
+(function init() {
+  // Set default expiry to tomorrow
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+  document.getElementById('item-expiry').value = tomorrow.toISOString().split('T')[0];
+
+  // Restore settings
+  setMode(currentMode);
+  const savedKey = localStorage.getItem('kh-hf-key');
+  if (savedKey) document.getElementById('hf-api-key').value = savedKey;
+  document.getElementById('backend-url').value = backendUrl;
+
+  renderInventory();
+})();
+</script>
+</body>
+</html>
