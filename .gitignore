@@ -1,0 +1,11 @@
+# Ignore massive AI models
+*.gguf
+*.bin
+checkpoints/
+sensenova/
+
+# Ignore Python environment and outputs
+__pycache__/
+venv/
+output.png
+.env
